@@ -16,8 +16,9 @@ var AlexaSkill = require('./AlexaSkill');
 /**
  * URL prefix
  */
-var authToken= '?access_token=email:token&access_token=email:token'
-var urlPrefix = 'https://api.multco.us/bridges/'
+// var authToken= '?access_token=email:token&access_token=email:token'
+// var urlPrefix = 'https://api.multco.us/bridges/'
+var urlPrefix = 'https://www.ipify.org/'
 
 
 var BridgeScheduleSkill = function() {
@@ -146,7 +147,8 @@ function handleBridgeInfoIntentRequest(intent, session, response) {
         console.log(result);
         var speechText = ''
         if(result.status==='success')  {
-            speechText = result.message;
+            // speechText = result.message;
+            speechText = result.ip;
         var cardTitle="Bridge Schedule";
         var speechOutput = {
             speech: "<speak>"+ speechText + "</speak>",
@@ -158,7 +160,8 @@ function handleBridgeInfoIntentRequest(intent, session, response) {
 
 
 function getBridgeInfo(bridge, eventCallback) {
-    url = urlPrefix + bridge + authToken;
+    // url = urlPrefix + bridge + authToken;
+    url = urlPrefix;
     console.log('lookup: ' + url);
 
     http.get(url, function(res) {
