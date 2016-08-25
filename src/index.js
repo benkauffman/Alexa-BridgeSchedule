@@ -147,16 +147,18 @@ function handleBridgeInfoIntentRequest(intent, session, response) {
         console.log(result);
         var speechText = ''
         if(result.status==='success')  {
-            // speechText = result.message;
-            speechText = result.ip;
-        var cardTitle="Bridge Schedule";
-        var speechOutput = {
-            speech: "<speak>"+ speechText + "</speak>",
-            type: AlexaSkill.speechOutputType.SSML
-        };
-        response.tellWithCard(speechOutput, cardTitle, speechText);
+          // speechText = result.message;
+          speechText = result.ip;
+          var cardTitle="Bridge Schedule";
+          var speechOutput = {
+              speech: "<speak>"+ speechText + "</speak>",
+              type: AlexaSkill.speechOutputType.SSML
+          };
+          response.tellWithCard(speechOutput, cardTitle, speechText);
+        }
     });
 }
+
 
 
 function getBridgeInfo(bridge, eventCallback) {
