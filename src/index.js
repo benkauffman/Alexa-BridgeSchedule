@@ -6,7 +6,7 @@ var APP_ID = undefined; //replace with 'amzn1.echo-sdk-ams.app.[your-unique-valu
 // curl -X GET --header "Accept: application/json" "https://api.multco.us/bridges/hawthorne?access_token=email:token&access_token=email:token"
 
 // bridgeinfo uses https
-var http = require('http');
+var http = require('https');
 
 /**
  * The AlexaSkill Module that has the AlexaSkill prototype and helper functions
