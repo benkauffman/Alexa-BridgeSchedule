@@ -1,0 +1,25 @@
+{
+  "intents": [
+    {
+      "intent": "GetBridgeInfoIntent",
+      "slots": [
+        {
+          "name": "BridgeName",
+          "type": "LIST_OF_BRIDGES"
+        }
+      ]
+    },
+    {
+      "intent": "GetVersionIntent"
+    },
+    {
+      "intent": "AMAZON.HelpIntent"
+    },
+    {
+      "intent": "AMAZON.StopIntent"
+    },
+    {
+      "intent": "AMAZON.CancelIntent"
+    }
+  ]
+ }
