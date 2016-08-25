@@ -6,7 +6,7 @@ var APP_ID = undefined; //replace with 'amzn1.echo-sdk-ams.app.[your-unique-valu
 // curl -X GET --header "Accept: application/json" "https://api.multco.us/bridges/hawthorne?access_token=email:token&access_token=email:token"
 
 // bridgeinfo uses https
-var http = require('https');
+var http = require('http');
 
 /**
  * The AlexaSkill Module that has the AlexaSkill prototype and helper functions
@@ -141,7 +141,7 @@ function handleBridgeInfoIntentRequest(intent, session, response) {
         errorMessage("it appears the requested bridge is not listed.");
     }
 
-    var bridge=p intent.slots.One.value;
+    var bridge=intent.slots.BridgeName.value;
 
     getBridgeInfo(bridge, function (result) {
         console.log(result);
