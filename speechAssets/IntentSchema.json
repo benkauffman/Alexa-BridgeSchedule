@@ -1,7 +1,7 @@
 {
   "intents": [
     {
-      "intent": "GetBridgeInfoIntent",
+      "intent": "GetBridgeScheduleIntent",
       "slots": [
         {
           "name": "BridgeName",

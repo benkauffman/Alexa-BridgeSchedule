@@ -1,8 +1,8 @@
 GetVersionIntent what version are you
 GetVersionIntent what are you up to
 
-GetBridgeInfoIntent look up the {BridgeName} bridge
-GetBridgeInfoIntent lookup the {BridgeName} bridge
-GetBridgeInfoIntent what is the {BridgeName} bridge schedule
-GetBridgeInfoIntent is the {BridgeName} bridge up
-GetBridgeInfoIntent is the {BridgeName} bridge down
+GetBridgeScheduleIntent look up the {BridgeName} bridge
+GetBridgeScheduleIntent lookup the {BridgeName} bridge
+GetBridgeScheduleIntent what is the {BridgeName} bridge schedule
+GetBridgeScheduleIntent is the {BridgeName} bridge up
+GetBridgeScheduleIntent is the {BridgeName} bridge down

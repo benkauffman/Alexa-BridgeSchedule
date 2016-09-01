@@ -52,8 +52,8 @@ BridgeScheduleSkill.prototype.eventHandlers.onSessionEnded = function (sessionEn
 
 BridgeScheduleSkill.prototype.intentHandlers = {
 
-    "GetBridgeInfoIntent": function (intent, session, response) {
-        handleBridgeInfoIntentRequest(intent, session, response);
+    "GetBridgeScheduleIntent": function (intent, session, response) {
+        handleBridgeScheduleIntentRequest(intent, session, response);
     },
     "GetVersionIntent": function (intent, session, response) {
         handleVersionIntentRequest(intent, session, response);
@@ -137,7 +137,7 @@ function handleVersionIntentRequest(intent, session, response) {
 /**
  * Gets a poster prepares the speech to reply to the user.
  */
-function handleBridgeInfoIntentRequest(intent, session, response) {
+function handleBridgeScheduleIntentRequest(intent, session, response) {
 
     if(!validateBridge(intent)){
       return;
