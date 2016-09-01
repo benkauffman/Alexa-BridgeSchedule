@@ -13,6 +13,8 @@ var APP_ID = null; //replace with 'amzn1.echo-sdk-ams.app.[your-unique-value-her
 // bridgeinfo uses https
 var http = require('https');
 
+var globalResponse;
+
 /**
  * The AlexaSkill Module that has the AlexaSkill prototype and helper functions
  */
@@ -22,7 +24,7 @@ var AlexaSkill = require('./AlexaSkill');
  * URL prefix
  */
 var authToken= '?access_token=' + credentials.access_token;
-var urlPrefix = 'https://api.multco.us/bridges/';
+var urlPrefix = 'https://api.multco.us/bridges';
 
 
 var BridgeScheduleSkill = function() {
@@ -55,11 +57,14 @@ BridgeScheduleSkill.prototype.intentHandlers = {
     "GetBridgeScheduleIntent": function (intent, session, response) {
         handleBridgeScheduleIntentRequest(intent, session, response);
     },
+    "GetBridgeUpIntent": function (intent, session, response) {
+        handleBridgeUpIntentRequest(intent, session, response);
+    },
     "GetVersionIntent": function (intent, session, response) {
         handleVersionIntentRequest(intent, session, response);
     },
     "AMAZON.HelpIntent": function (intent, session, response) {
-        var speechText = "With multnomah county bridge schedules, you can get information about the bridge." +
+        var speechText = "With multnomah county bridges, you can get information about the hawthorne, morrison, burnside or broadway bridge." +
             "For example, you can ask 'What is the burnside bridge schedule?' or 'Is the broadway bridge up?'";
         var repromptText = "Would you like to check another bridge?";
         var speechOutput = {
@@ -95,6 +100,7 @@ BridgeScheduleSkill.prototype.intentHandlers = {
  */
 
 function getWelcomeResponse(response) {
+    globalResponse = response;
     // If we wanted to initialize the session to have some attributes we could add those here.
     var cardTitle = "Bridge Schedule";
     var repromptText = "Which bridge would you like me to check?";
@@ -118,13 +124,14 @@ function getWelcomeResponse(response) {
  * Gets a poster prepares the speech to reply to the user.
  */
 function handleVersionIntentRequest(intent, session, response) {
+    globalResponse = response;
 
     var prefixContent = "";
     var cardContent = "";
     var cardTitle = "";
 
     var speechOutput = {
-        speech: "<speak>I am version zero dot zero dot zero</speak>",
+        speech: "<speak>I am version zero dot zero dot one</speak>",
         type: AlexaSkill.speechOutputType.SSML
     };
     var repromptOutput = {
@@ -138,6 +145,7 @@ function handleVersionIntentRequest(intent, session, response) {
  * Gets a poster prepares the speech to reply to the user.
  */
 function handleBridgeScheduleIntentRequest(intent, session, response) {
+    globalResponse = response;
 
     if(!validateBridge(intent)){
       return;
@@ -145,14 +153,14 @@ function handleBridgeScheduleIntentRequest(intent, session, response) {
 
     var millis = new Date().getTime();
 
-    var bridge=intent.slots.BridgeName.value;
+    var bridge=intent.slots.BridgeName.value.toLowerCase();
 
     getBridgeInfo(bridge, function (result) {
         console.log(result);
         var speechText = '';
         if(result.status==='success')  {
           // speechText = result.message;
-          if(jsonResult.body.length <= 0){
+          if(result.body.length <= 0){
           speechText = "There are currently no scheduled events for the " + bridge + " bridge.";
         }else{
           speechText = "There are currently " + jsonResult.body.length + " scheduled events for the " + bridge + " bridge.";
@@ -165,26 +173,70 @@ function handleBridgeScheduleIntentRequest(intent, session, response) {
           };
           response.tellWithCard(speechOutput, cardTitle, speechText);
         }
+    }, "events/scheduled/" + millis);
+}
+
+
+
+/**
+ * Gets a poster prepares the speech to reply to the user.
+ */
+function handleBridgeUpIntentRequest(intent, session, response) {
+    globalResponse = response;
+
+    if(!validateBridge(intent)){
+      return;
+    }
+
+    var bridge=intent.slots.BridgeName.value.toLowerCase();
+
+    getBridgeInfo("", function (result) {
+        console.log(result);
+        var speechText = '';
+        if(result.status==='success')  {
+
+          var filteredBridge = result.body.filter(function(bridgeObj){return bridgeObj.name===bridge;})[0];
+
+          historicMinutes = (filteredBridge.avgUpTime / 60000).toFixed(2);
+          if(filteredBridge.isUp){
+          speechText = "The " + bridge + " bridge is currently up. " +
+          "It has historically been lifted " + filteredBridge.actualCount + " times, with an average lift time of " + historicMinutes + " minutes";
+        }else{
+          speechText = "The " + bridge + " bridge is currently down. " +
+          "It has historically been lifted " + filteredBridge.actualCount + " times, with an average lift time of " + historicMinutes + " minutes";
+        }
+
+          var cardTitle="Bridge Up";
+          var speechOutput = {
+              speech: "<speak>"+ speechText + "</speak>",
+              type: AlexaSkill.speechOutputType.SSML
+          };
+          response.tellWithCard(speechOutput, cardTitle, speechText);
+        }
     });
 }
+
+
 
 function validateBridge(intent){
   bridges = ["hawthorne","morrison","burnside","broadway"];
 
   if(!intent || bridges.indexOf(intent.slots.BridgeName.value.toLowerCase()) <= -1) {
       errorMessage("it appears the requested bridge is not listed. You can ask about the hawthorne, morrison, burnside or broadway bridge.");
-      return;
+      console.log("bridge request is NOT valid");
+      return false;
   }
+  console.log("bridge request is valid for " + intent.slots.BridgeName.value);
+  return true;
 }
 
 function getBridgeInfo(bridge, eventCallback, apiResource) {
 
-  if(bridge){
-    url = urlPrefix + '\\' + bridge + authToken;
-  }else{
-  url = urlPrefix + authToken;
-  }
-    console.log('lookup: ' + url);
+  console.log("get bridge info");
+
+  url = urlPrefix + ((bridge) ? "/" + bridge : "") + ((apiResource) ? "/" + apiResource : "") + authToken;
+
+    console.log('request url: ' + url);
 
     http.get(url, function(res) {
         var body = '';
@@ -193,17 +245,15 @@ function getBridgeInfo(bridge, eventCallback, apiResource) {
         });
         res.on('end', function () {
             try {
-                var jsonResult.body = JSON.parse(body);
+                console.log("request was success = " + body);
+                var jsonResult = {body:"", status:""};
+                jsonResult.body = JSON.parse(body);
                 jsonResult.status='success';
                 eventCallback( jsonResult );
             }
             catch(err) {
-                eventCallback(
-                    {
-                        status: 'error',
-                        message: body
-                    }
-                );
+              console.log("Got error: ", err);
+                eventCallback({status: 'error', message: body});
             }
         });
     }).on('error', function (e) {
@@ -213,16 +263,16 @@ function getBridgeInfo(bridge, eventCallback, apiResource) {
 }
 
 function errorMessage(errString) {
-        var speechText = "I am sorry, there was an error " + errString;
+        var speechText = "I am sorry, there was an error. " + errString;
         var speechOutput = {
             speech: "<speak>"+ speechText + "</speak>",
             type: AlexaSkill.speechOutputType.SSML
         };
         var repromptOutput = {
-            speech: repromptText,
+            speech: "Would you like get information about the current or future status of a bridge?",
             type: AlexaSkill.speechOutputType.PLAIN_TEXT
         };
-        response.tellWithCard(speechOutput, "Error", speechText);
+        globalResponse.tellWithCard(speechOutput, "Error", speechText);
 }
 
 // Create the handler that responds to the Alexa Request.

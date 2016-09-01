@@ -10,6 +10,15 @@
       ]
     },
     {
+      "intent": "GetBridgeUpIntent",
+      "slots": [
+        {
+          "name": "BridgeName",
+          "type": "LIST_OF_BRIDGES"
+        }
+      ]
+    },
+    {
       "intent": "GetVersionIntent"
     },
     {
