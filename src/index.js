@@ -155,7 +155,7 @@ function handleBridgeInfoIntentRequest(intent, session, response) {
           if(jsonResult.body.length <= 0){
           speechText = "There are currently no scheduled events for the " + bridge + " bridge.";
         }else{
-          speechText = "There are currently " + jsonResult.body.length + " scheduled events for the " + bridge + " bridge.";  
+          speechText = "There are currently " + jsonResult.body.length + " scheduled events for the " + bridge + " bridge.";
         }
 
           var cardTitle="Bridge Schedule";
