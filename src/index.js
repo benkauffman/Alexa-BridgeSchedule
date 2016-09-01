@@ -1,8 +1,13 @@
 // bridge icon from http://www.flaticon.com/free-icon/bridge_183375
+
+var fs = require('fs');
+var credentials = JSON.parse(fs.readFileSync('credentials.json', 'utf8'));
+console.log('api_key: %s', credentials.access_token);
+
 /**
  * App ID for the skill
  */
-var APP_ID = undefined; //replace with 'amzn1.echo-sdk-ams.app.[your-unique-value-here]';
+var APP_ID = null; //replace with 'amzn1.echo-sdk-ams.app.[your-unique-value-here]';
 // curl -X GET --header "Accept: application/json" "https://api.multco.us/bridges/hawthorne?access_token=email:token&access_token=email:token"
 
 // bridgeinfo uses https
@@ -16,9 +21,8 @@ var AlexaSkill = require('./AlexaSkill');
 /**
  * URL prefix
  */
-// var authToken= '?access_token=email:token&access_token=email:token'
-// var urlPrefix = 'https://api.multco.us/bridges/'
-var urlPrefix = 'https://www.ipify.org/'
+var authToken= '?access_token=' + credentials.access_token;
+var urlPrefix = 'https://api.multco.us/bridges/';
 
 
 var BridgeScheduleSkill = function() {
@@ -30,8 +34,7 @@ BridgeScheduleSkill.prototype = Object.create(AlexaSkill.prototype);
 BridgeScheduleSkill.prototype.constructor = BridgeScheduleSkill;
 
 BridgeScheduleSkill.prototype.eventHandlers.onSessionStarted = function (sessionStartedRequest, session) {
-    console.log("BridgeScheduleSkill onSessionStarted requestId: " + sessionStartedRequest.requestId
-        + ", sessionId: " + session.sessionId);
+    console.log("BridgeScheduleSkill onSessionStarted requestId: " + sessionStartedRequest.requestId + ", sessionId: " + session.sessionId);
 
     // any session init logic would go here
 };
@@ -42,8 +45,7 @@ BridgeScheduleSkill.prototype.eventHandlers.onLaunch = function (launchRequest, 
 };
 
 BridgeScheduleSkill.prototype.eventHandlers.onSessionEnded = function (sessionEndedRequest, session) {
-    console.log("onSessionEnded requestId: " + sessionEndedRequest.requestId
-        + ", sessionId: " + session.sessionId);
+    console.log("onSessionEnded requestId: " + sessionEndedRequest.requestId + ", sessionId: " + session.sessionId);
 
     // any session cleanup logic would go here
 };
@@ -57,9 +59,9 @@ BridgeScheduleSkill.prototype.intentHandlers = {
         handleVersionIntentRequest(intent, session, response);
     },
     "AMAZON.HelpIntent": function (intent, session, response) {
-        var speechText = "With bridge schedules, you can get information about the bridge." +
-            "For example, you can ask 'What is the burnside bridge schedule?'";
-        var repromptText = "Do you need another schedule?";
+        var speechText = "With multnomah county bridge schedules, you can get information about the bridge." +
+            "For example, you can ask 'What is the burnside bridge schedule?' or 'Is the broadway bridge up?'";
+        var repromptText = "Would you like to check another bridge?";
         var speechOutput = {
             speech: speechText,
             type: AlexaSkill.speechOutputType.PLAIN_TEXT
@@ -137,18 +139,25 @@ function handleVersionIntentRequest(intent, session, response) {
  */
 function handleBridgeInfoIntentRequest(intent, session, response) {
 
-    if(!intent) {
-        errorMessage("it appears the requested bridge is not listed.");
+    if(!validateBridge(intent)){
+      return;
     }
+
+    var millis = new Date().getTime();
 
     var bridge=intent.slots.BridgeName.value;
 
     getBridgeInfo(bridge, function (result) {
         console.log(result);
-        var speechText = ''
+        var speechText = '';
         if(result.status==='success')  {
           // speechText = result.message;
-          speechText = result.ip;
+          if(jsonResult.body.length <= 0){
+          speechText = "There are currently no scheduled events for the " + bridge + " bridge.";
+        }else{
+          speechText = "There are currently " + jsonResult.body.length + " scheduled events for the " + bridge + " bridge.";  
+        }
+
           var cardTitle="Bridge Schedule";
           var speechOutput = {
               speech: "<speak>"+ speechText + "</speak>",
@@ -159,11 +168,22 @@ function handleBridgeInfoIntentRequest(intent, session, response) {
     });
 }
 
+function validateBridge(intent){
+  bridges = ["hawthorne","morrison","burnside","broadway"];
 
+  if(!intent || bridges.indexOf(intent.slots.BridgeName.value.toLowerCase()) <= -1) {
+      errorMessage("it appears the requested bridge is not listed. You can ask about the hawthorne, morrison, burnside or broadway bridge.");
+      return;
+  }
+}
 
-function getBridgeInfo(bridge, eventCallback) {
-    // url = urlPrefix + bridge + authToken;
-    url = urlPrefix;
+function getBridgeInfo(bridge, eventCallback, apiResource) {
+
+  if(bridge){
+    url = urlPrefix + '\\' + bridge + authToken;
+  }else{
+  url = urlPrefix + authToken;
+  }
     console.log('lookup: ' + url);
 
     http.get(url, function(res) {
@@ -173,7 +193,7 @@ function getBridgeInfo(bridge, eventCallback) {
         });
         res.on('end', function () {
             try {
-                var jsonResult = JSON.parse(body);
+                var jsonResult.body = JSON.parse(body);
                 jsonResult.status='success';
                 eventCallback( jsonResult );
             }
@@ -183,9 +203,9 @@ function getBridgeInfo(bridge, eventCallback) {
                         status: 'error',
                         message: body
                     }
-                )
+                );
             }
-        })
+        });
     }).on('error', function (e) {
         console.log("Got error: ", e);
         errorMessage("fetching the schedule for the " + bridge + " bridge");
